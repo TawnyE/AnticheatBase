@@ -1,14 +1,9 @@
 package me.nik.anticheatbase.processors;
 
-import me.nik.anticheatbase.wrappers.WrapperPlayClientBlockDig;
-import me.nik.anticheatbase.wrappers.WrapperPlayClientChat;
-import me.nik.anticheatbase.wrappers.WrapperPlayClientEntityAction;
-import me.nik.anticheatbase.wrappers.WrapperPlayClientLook;
-import me.nik.anticheatbase.wrappers.WrapperPlayClientPosition;
-import me.nik.anticheatbase.wrappers.WrapperPlayClientPositionLook;
-import me.nik.anticheatbase.wrappers.WrapperPlayClientUseEntity;
-import me.nik.anticheatbase.wrappers.WrapperPlayClientWindowClick;
+import lombok.Getter;
+import me.nik.anticheatbase.wrappers.*;
 
+@Getter
 public class Packet {
 
     private final Type type;
@@ -35,7 +30,7 @@ public class Packet {
 
     public Packet withUseEntity(WrapperPlayClientUseEntity wrapper) {
         this.useEntityWrapper = wrapper;
-        this.attack = wrapper != null && wrapper.getType() == WrapperPlayClientUseEntity.Action.ATTACK;
+        this.attack = wrapper != null && wrapper.getAction() == WrapperPlayClientUseEntity.Action.ATTACK;
         return this;
     }
 
@@ -82,64 +77,8 @@ public class Packet {
         return this;
     }
 
-    public boolean isAttack() {
-        return attack;
-    }
-
-    public boolean isMovement() {
-        return movement;
-    }
-
-    public boolean isRotation() {
-        return rotation;
-    }
-
-    public boolean isFlying() {
-        return flying;
-    }
-
-    public WrapperPlayClientUseEntity getUseEntityWrapper() {
-        return useEntityWrapper;
-    }
-
-    public WrapperPlayClientBlockDig getBlockDigWrapper() {
-        return blockDigWrapper;
-    }
-
-    public WrapperPlayClientWindowClick getWindowClickWrapper() {
-        return windowClickWrapper;
-    }
-
-    public WrapperPlayClientEntityAction getEntityActionWrapper() {
-        return entityActionWrapper;
-    }
-
-    public WrapperPlayClientChat getChatWrapper() {
-        return chatWrapper;
-    }
-
-    public WrapperPlayClientPosition getPositionWrapper() {
-        return positionWrapper;
-    }
-
-    public WrapperPlayClientPositionLook getPositionLookWrapper() {
-        return positionLookWrapper;
-    }
-
-    public WrapperPlayClientLook getLookWrapper() {
-        return lookWrapper;
-    }
-
     public boolean is(Type type) {
         return this.type == type;
-    }
-
-    public Type getType() {
-        return type;
-    }
-
-    public long getTimeStamp() {
-        return timeStamp;
     }
 
     public enum Type {
