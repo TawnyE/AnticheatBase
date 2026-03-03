@@ -2,16 +2,16 @@ package me.nik.anticheatbase.utils;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A BetterStream utility class
  * <p>
- * Obviously this does not include every single Stream method
- * However these methods are much faster than using streams.
+ * Updated to leverage modern Java Streams which are highly optimized in Java 17.
  */
 public final class BetterStream {
 
@@ -19,293 +19,96 @@ public final class BetterStream {
     }
 
     public static <T> boolean anyMatch(final Collection<T> data, final Predicate<T> condition) {
-        if (data == null || condition == null) return false;
-
-        for (final T object : data) if (condition.test(object)) return true;
-
-        return false;
+        return data != null && data.stream().anyMatch(condition);
     }
 
     public static <T> boolean anyMatch(final T[] data, final Predicate<T> condition) {
-        if (data == null || condition == null) return false;
-
-        for (final T object : data) if (condition.test(object)) return true;
-
-        return false;
+        return data != null && Stream.of(data).anyMatch(condition);
     }
 
     public static <T> boolean allMatch(final Collection<T> data, final Predicate<T> condition) {
-        if (data == null || condition == null) return false;
-
-        for (final T object : data) if (!condition.test(object)) return false;
-
-        return true;
+        return data != null && data.stream().allMatch(condition);
     }
 
     public static <T> boolean allMatch(final T[] data, final Predicate<T> condition) {
-        if (data == null || condition == null) return false;
-
-        for (final T object : data) if (!condition.test(object)) return false;
-
-        return true;
+        return data != null && Stream.of(data).allMatch(condition);
     }
 
-    public static <T> Collection<T> applyAndGet(final Collection<T> data, final Function<T, T> action) {
-
-        final List<T> list = new LinkedList<>();
-
-        if (action == null || data.isEmpty()) return list;
-
-        for (final T object : data) list.add(action.apply(object));
-
-        return list;
+    public static <T> List<T> applyAndGet(final Collection<T> data, final Function<T, T> action) {
+        if (data == null || action == null) return List.of();
+        return data.stream().map(action).collect(Collectors.toList());
     }
 
     public static <T> double mapToDoubleMin(final Collection<T> data, final Function<T, Double> action) {
-
-        if (action == null || data.isEmpty()) return 0D;
-
-        double min = Double.MAX_VALUE;
-
-        for (final T object : data) {
-
-            final double applied = action.apply(object);
-
-            if (applied < min) min = applied;
-        }
-
-        return min;
+        if (data == null || data.isEmpty() || action == null) return 0D;
+        return data.stream().mapToDouble(action::apply).min().orElse(0D);
     }
 
     public static <T> double mapToDoubleMax(final Collection<T> data, final Function<T, Double> action) {
-
-        if (action == null || data.isEmpty()) return 0D;
-
-        double max = Double.MIN_VALUE;
-
-        for (final T object : data) {
-
-            final double applied = action.apply(object);
-
-            if (applied > max) max = applied;
-        }
-
-        return max;
+        if (data == null || data.isEmpty() || action == null) return 0D;
+        return data.stream().mapToDouble(action::apply).max().orElse(0D);
     }
 
-    public static <T> Collection<T> filter(final Collection<T> data, final Predicate<T> filter) {
-
-        final List<T> list = new LinkedList<>();
-
-        if (filter == null || data.isEmpty()) return list;
-
-        for (final T object : data) if (filter.test(object)) list.add(object);
-
-        return list;
+    public static <T> List<T> filter(final Collection<T> data, final Predicate<T> filter) {
+        if (data == null || filter == null) return List.of();
+        return data.stream().filter(filter).collect(Collectors.toList());
     }
 
-    public static <T> Collection<T> filter(final T[] data, final Predicate<T> filter) {
-
-        final List<T> list = new LinkedList<>();
-
-        if (filter == null || data.length == 0) return list;
-
-        for (final T object : data) if (filter.test(object)) list.add(object);
-
-        return list;
+    public static <T> List<T> filter(final T[] data, final Predicate<T> filter) {
+        if (data == null || filter == null) return List.of();
+        return Stream.of(data).filter(filter).collect(Collectors.toList());
     }
 
     public static <T> Collection<T> distinct(final Collection<T> data) {
-        return new HashSet<>(data);
+        return data == null ? List.of() : new HashSet<>(data);
     }
 
     public static int getDuplicates(final Collection<?> data) {
-        if (data.isEmpty()) return 0;
-
-        return data.size() - distinct(data).size();
+        if (data == null || data.isEmpty()) return 0;
+        return data.size() - (int) data.stream().distinct().count();
     }
 
     public static double getMaximumDouble(final Collection<Double> nums) {
-        if (nums.isEmpty()) return 0.0D;
-
-        double max = Double.MIN_VALUE;
-
-        for (final double val : nums) if (val > max) max = val;
-
-        return max;
+        return nums == null ? 0.0D : nums.stream().mapToDouble(d -> d).max().orElse(0.0D);
     }
 
     public static int getMaximumInt(final Collection<Integer> nums) {
-        if (nums.isEmpty()) return 0;
-
-        int max = Integer.MIN_VALUE;
-
-        for (final int val : nums) if (val > max) max = val;
-
-        return max;
+        return nums == null ? 0 : nums.stream().mapToInt(i -> i).max().orElse(0);
     }
 
     public static long getMaximumLong(final Collection<Long> nums) {
-        if (nums.isEmpty()) return 0L;
-
-        long max = Long.MIN_VALUE;
-
-        for (final long val : nums) if (val > max) max = val;
-
-        return max;
-    }
-
-    public static float getMaximumFloat(final Collection<Float> nums) {
-        if (nums.isEmpty()) return 0.0F;
-
-        float max = Float.MIN_VALUE;
-
-        for (final float val : nums) if (val > max) max = val;
-
-        return max;
+        return nums == null ? 0L : nums.stream().mapToLong(l -> l).max().orElse(0L);
     }
 
     public static double getMinimumDouble(final Collection<Double> nums) {
-        if (nums.isEmpty()) return 0.0D;
-
-        double min = Double.MAX_VALUE;
-
-        for (final double val : nums) if (val < min) min = val;
-
-        return min;
+        return nums == null ? 0.0D : nums.stream().mapToDouble(d -> d).min().orElse(0.0D);
     }
 
     public static int getMinimumInt(final Collection<Integer> nums) {
-        if (nums.isEmpty()) return 0;
-
-        int min = Integer.MAX_VALUE;
-
-        for (final int val : nums) if (val < min) min = val;
-
-        return min;
+        return nums == null ? 0 : nums.stream().mapToInt(i -> i).min().orElse(0);
     }
 
     public static long getMinimumLong(final Collection<Long> nums) {
-        if (nums.isEmpty()) return 0L;
-
-        long min = Long.MAX_VALUE;
-
-        for (final long val : nums) if (val < min) min = val;
-
-        return min;
-    }
-
-    public static float getMinimumFloat(final Collection<Float> nums) {
-        if (nums.isEmpty()) return 0.0F;
-
-        float min = Float.MAX_VALUE;
-
-        for (final float val : nums) if (val < min) min = val;
-
-        return min;
+        return nums == null ? 0L : nums.stream().mapToLong(l -> l).min().orElse(0L);
     }
 
     public static double getSumDouble(final Collection<Double> nums) {
-        if (nums.isEmpty()) return 0D;
-
-        double sum = 0D;
-
-        for (final double num : nums) sum += num;
-
-        return sum;
+        return nums == null ? 0D : nums.stream().mapToDouble(d -> d).sum();
     }
 
     public static int getSumInt(final Collection<Integer> nums) {
-        if (nums.isEmpty()) return 0;
-
-        int sum = 0;
-
-        for (final int num : nums) sum += num;
-
-        return sum;
+        return nums == null ? 0 : nums.stream().mapToInt(i -> i).sum();
     }
 
     public static long getSumLong(final Collection<Long> nums) {
-        if (nums.isEmpty()) return 0L;
-
-        long sum = 0L;
-
-        for (final long num : nums) sum += num;
-
-        return sum;
-    }
-
-    public static float getSumFloat(final Collection<Float> nums) {
-        if (nums.isEmpty()) return 0F;
-
-        float sum = 0F;
-
-        for (final float num : nums) sum += num;
-
-        return sum;
+        return nums == null ? 0L : nums.stream().mapToLong(l -> l).sum();
     }
 
     public static double getAverageDouble(final Collection<Double> nums) {
-        if (nums.isEmpty()) return 0D;
-
-        return getSumDouble(nums) / nums.size();
+        return nums == null || nums.isEmpty() ? 0D : getSumDouble(nums) / nums.size();
     }
 
-    public static int getAverageInt(final Collection<Integer> nums) {
-        if (nums.isEmpty()) return 0;
-
-        return getSumInt(nums) / nums.size();
-    }
-
-    public static long getAverageLong(final Collection<Long> nums) {
-        if (nums.isEmpty()) return 0L;
-
-        return getSumLong(nums) / nums.size();
-    }
-
-    public static float getAverageFloat(final Collection<Float> nums) {
-        if (nums.isEmpty()) return 0F;
-
-        return getSumFloat(nums) / nums.size();
-    }
-
-    public static double getAverageDouble(final Collection<Double> nums, final Predicate<Double> condition) {
-        if (nums.isEmpty()) return 0D;
-
-        double sum = 0D;
-
-        for (final double num : nums) if (condition.test(num)) sum += num;
-
-        return sum / nums.size();
-    }
-
-    public static int getAverageInt(final Collection<Integer> nums, final Predicate<Integer> condition) {
-        if (nums.isEmpty()) return 0;
-
-        int sum = 0;
-
-        for (final int num : nums) if (condition.test(num)) sum += num;
-
-        return sum / nums.size();
-    }
-
-    public static long getAverageLong(final Collection<Long> nums, final Predicate<Long> condition) {
-        if (nums.isEmpty()) return 0L;
-
-        long sum = 0L;
-
-        for (final long num : nums) if (condition.test(num)) sum += num;
-
-        return sum / nums.size();
-    }
-
-    public static float getAverageFloat(final Collection<Float> nums, final Predicate<Float> condition) {
-        if (nums.isEmpty()) return 0F;
-
-        float sum = 0F;
-
-        for (final float num : nums) if (condition.test(num)) sum += num;
-
-        return sum / nums.size();
+    public static double getAverageInt(final Collection<Integer> nums) {
+        return nums == null || nums.isEmpty() ? 0D : (double) getSumInt(nums) / nums.size();
     }
 }

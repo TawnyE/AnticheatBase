@@ -1,7 +1,11 @@
 package me.nik.anticheatbase.wrappers;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.bukkit.util.Vector;
 
+@Getter
+@RequiredArgsConstructor
 public class WrapperPlayClientUseEntity {
 
     public enum Action {
@@ -12,16 +16,6 @@ public class WrapperPlayClientUseEntity {
     }
 
     private final int targetId;
-    private final Action type;
+    private final Action action;
     private final Vector targetVector;
-
-    public WrapperPlayClientUseEntity(int targetId, Action type, Vector targetVector) {
-        this.targetId = targetId;
-        this.type = type;
-        this.targetVector = targetVector;
-    }
-
-    public int getTargetID() { return targetId; }
-    public Action getType() { return type; }
-    public Vector getTargetVector() { return targetVector; }
 }

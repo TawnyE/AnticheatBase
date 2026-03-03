@@ -28,7 +28,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * A simple and efficient anticheat base
@@ -49,7 +51,7 @@ public class Anticheat extends JavaPlugin {
 
     private AlertManager alertManager;
     private ThemeManager themeManager;
-    private final java.util.List<PacketListener> packetListeners = new java.util.ArrayList<>();
+    private final List<PacketListener> packetListeners = new ArrayList<>();
 
     @Override
     public void onEnable() {
@@ -86,7 +88,7 @@ public class Anticheat extends JavaPlugin {
                 new ClientBrandListener(this)
         ).forEach(packetListener -> {
             this.packetListeners.add(packetListener);
-            PacketEvents.getAPI().getEventManager().registerListener(packetListener);
+            PacketEvents.getAPI().getEventManager().registerListener((com.github.retrooper.packetevents.event.PacketListenerCommon) packetListener);
         });
 
         PacketEvents.getAPI().init();
@@ -141,7 +143,7 @@ public class Anticheat extends JavaPlugin {
 
         //Unregister any listeners
         HandlerList.unregisterAll(this);
-        this.packetListeners.forEach(listener -> PacketEvents.getAPI().getEventManager().unregisterListener(listener));
+        this.packetListeners.forEach(listener -> PacketEvents.getAPI().getEventManager().unregisterListener((com.github.retrooper.packetevents.event.PacketListenerCommon) listener));
         this.packetListeners.clear();
 
         PacketEvents.getAPI().terminate();
