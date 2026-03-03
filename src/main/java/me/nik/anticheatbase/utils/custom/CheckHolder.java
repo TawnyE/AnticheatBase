@@ -1,7 +1,15 @@
 package me.nik.anticheatbase.utils.custom;
 
 import me.nik.anticheatbase.checks.annotations.Testing;
-import me.nik.anticheatbase.checks.impl.speed.SpeedA;
+import me.nik.anticheatbase.checks.impl.aim.*;
+import me.nik.anticheatbase.checks.impl.autoclicker.*;
+import me.nik.anticheatbase.checks.impl.fly.*;
+import me.nik.anticheatbase.checks.impl.killaura.*;
+import me.nik.anticheatbase.checks.impl.movement.*;
+import me.nik.anticheatbase.checks.impl.reach.*;
+import me.nik.anticheatbase.checks.impl.speed.*;
+import me.nik.anticheatbase.checks.impl.velocity.*;
+import me.nik.anticheatbase.checks.impl.world.*;
 import me.nik.anticheatbase.checks.types.Check;
 import me.nik.anticheatbase.managers.profile.Profile;
 import me.nik.anticheatbase.processors.Packet;
@@ -35,9 +43,76 @@ public class CheckHolder {
         addChecks(
 
                 /*
+                Aim
+                 */
+                new AimA(this.profile),
+                new AimB(this.profile),
+                new AimC(this.profile),
+                new AimD(this.profile),
+                new AimE(this.profile),
+
+                /*
+                AutoClicker
+                 */
+                new AutoClickerA(this.profile),
+                new AutoClickerB(this.profile),
+                new AutoClickerC(this.profile),
+                new AutoClickerD(this.profile),
+
+                /*
+                KillAura
+                 */
+                new KillAuraA(this.profile),
+                new KillAuraB(this.profile),
+                new KillAuraC(this.profile),
+                new KillAuraD(this.profile),
+
+                /*
+                Reach
+                 */
+                new ReachA(this.profile),
+
+                /*
+                Velocity
+                 */
+                new VelocityA(this.profile),
+                new VelocityB(this.profile),
+
+                /*
+                Fly
+                 */
+                new FlyA(this.profile),
+                new FlyB(this.profile),
+                new FlyC(this.profile),
+                new FlyD(this.profile),
+
+                /*
                 Speed
                  */
-                new SpeedA(this.profile)
+                new SpeedA(this.profile),
+                new SpeedB(this.profile),
+                new SpeedC(this.profile),
+                new SpeedD(this.profile),
+
+                /*
+                Movement
+                 */
+                new NoFallA(this.profile),
+                new NoFallB(this.profile),
+                new JesusA(this.profile),
+                new JesusB(this.profile),
+                new NoSlowA(this.profile),
+                new OmniSprintA(this.profile),
+                new FastClimbA(this.profile),
+
+                /*
+                World
+                 */
+                new TimerA(this.profile),
+                new ScaffoldA(this.profile),
+                new ScaffoldB(this.profile),
+                new BadPacketsA(this.profile),
+                new BadPacketsB(this.profile)
         );
 
         /*

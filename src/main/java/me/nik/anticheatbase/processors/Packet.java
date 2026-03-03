@@ -18,6 +18,8 @@ public class Packet {
     private WrapperPlayClientPositionLook positionLookWrapper;
     private WrapperPlayClientLook lookWrapper;
 
+    private WrapperPlayServerEntityVelocity serverEntityVelocityWrapper;
+
     private boolean attack;
     private boolean movement;
     private boolean rotation;
@@ -69,6 +71,11 @@ public class Packet {
     public Packet withLook(WrapperPlayClientLook wrapper) {
         this.lookWrapper = wrapper;
         this.flying = this.rotation = wrapper != null;
+        return this;
+    }
+
+    public Packet withServerEntityVelocity(WrapperPlayServerEntityVelocity wrapper) {
+        this.serverEntityVelocityWrapper = wrapper;
         return this;
     }
 

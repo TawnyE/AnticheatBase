@@ -71,10 +71,101 @@ public class Checks implements Initializer {
     }
 
     public enum Setting {
+        AIM("aim", "", "Aim Check"),
+        AIM_A("aim.a", true, "GCD check"),
+        AIM_B("aim.b", true, "Snap check"),
+        AIM_C("aim.c", true, "Consistency check"),
+        AIM_D("aim.d", true, "Smoothness check"),
+        AIM_E("aim.e", true, "Acceleration check"),
+        AIM_MAX_VL("aim.max_vl", 10, "Max VL"),
+        AIM_COMMANDS("aim.commands", Collections.singletonList("ban %player% Aim Assist"), "Commands"),
+
+        AUTOCLICKER("autoclicker", "", "AutoClicker Check"),
+        AUTOCLICKER_A("autoclicker.a", true, "CPS check"),
+        AUTOCLICKER_B("autoclicker.b", true, "Consistency check"),
+        AUTOCLICKER_C("autoclicker.c", true, "Double-click check"),
+        AUTOCLICKER_D("autoclicker.d", true, "Skewness check"),
+        AUTOCLICKER_MAX_VL("autoclicker.max_vl", 15, "Max VL"),
+        AUTOCLICKER_COMMANDS("autoclicker.commands", Collections.singletonList("ban %player% AutoClicker"), "Commands"),
+
+        KILLAURA("killaura", "", "KillAura Check"),
+        KILLAURA_A("killaura.a", true, "Post-tick check"),
+        KILLAURA_B("killaura.b", true, "Multi-hit check"),
+        KILLAURA_C("killaura.c", true, "Switch check"),
+        KILLAURA_D("killaura.d", true, "Inertia check"),
+        KILLAURA_MAX_VL("killaura.max_vl", 10, "Max VL"),
+        KILLAURA_COMMANDS("killaura.commands", Collections.singletonList("ban %player% KillAura"), "Commands"),
+
+        REACH("reach", "", "Reach Check"),
+        REACH_A("reach.a", true, "Reach check"),
+        REACH_MAX_VL("reach.max_vl", 5, "Max VL"),
+        REACH_COMMANDS("reach.commands", Collections.singletonList("ban %player% Reach"), "Commands"),
+
+        VELOCITY("velocity", "", "Velocity Check"),
+        VELOCITY_A("velocity.a", true, "Vertical check"),
+        VELOCITY_B("velocity.b", true, "Horizontal check"),
+        VELOCITY_MAX_VL("velocity.max_vl", 5, "Max VL"),
+        VELOCITY_COMMANDS("velocity.commands", Collections.singletonList("ban %player% Velocity"), "Commands"),
+
+        FLY("fly", "", "Fly Check"),
+        FLY_A("fly.a", true, "Vertical check"),
+        FLY_B("fly.b", true, "Prediction check"),
+        FLY_C("fly.c", true, "Stable Y check"),
+        FLY_D("fly.d", true, "Acceleration check"),
+        FLY_MAX_VL("fly.max_vl", 10, "Max VL"),
+        FLY_COMMANDS("fly.commands", Collections.singletonList("ban %player% Fly"), "Commands"),
+
         SPEED("speed", "", "Speed Check"),
-        SPEED_A("speed.a", true, "Should we enable this module?"),
-        SPEED_MAX_VL("speed.max_vl", 10, "The maximum violation amount a player needs to reach in order to get punished"),
-        SPEED_COMMANDS("speed.commands", Collections.singletonList("ban %player% Unfair Advantage"), "The commands that will get executed once a player reaches the maximum violation amount");
+        SPEED_A("speed.a", true, "Predictive check"),
+        SPEED_B("speed.b", true, "Air check"),
+        SPEED_C("speed.c", true, "Strafe check"),
+        SPEED_D("speed.d", true, "Ground check"),
+        SPEED_MAX_VL("speed.max_vl", 10, "Max VL"),
+        SPEED_COMMANDS("speed.commands", Collections.singletonList("ban %player% Speed"), "Commands"),
+
+        NOFALL("nofall", "", "NoFall Check"),
+        NOFALL_A("nofall.a", true, "Spoof check"),
+        NOFALL_B("nofall.b", true, "Reset check"),
+        NOFALL_MAX_VL("nofall.max_vl", 5, "Max VL"),
+        NOFALL_COMMANDS("nofall.commands", Collections.singletonList("ban %player% NoFall"), "Commands"),
+
+        JESUS("jesus", "", "Jesus Check"),
+        JESUS_A("jesus.a", true, "Liquid check"),
+        JESUS_B("jesus.b", true, "Walking check"),
+        JESUS_MAX_VL("jesus.max_vl", 5, "Max VL"),
+        JESUS_COMMANDS("jesus.commands", Collections.singletonList("ban %player% Jesus"), "Commands"),
+
+        NOSLOW("noslow", "", "NoSlow Check"),
+        NOSLOW_A("noslow.a", true, "Item check"),
+        NOSLOW_MAX_VL("noslow.max_vl", 5, "Max VL"),
+        NOSLOW_COMMANDS("noslow.commands", Collections.singletonList("ban %player% NoSlow"), "Commands"),
+
+        OMNISPRINT("omnisprint", "", "OmniSprint Check"),
+        OMNISPRINT_A("omnisprint.a", true, "Sprint check"),
+        OMNISPRINT_MAX_VL("omnisprint.max_vl", 5, "Max VL"),
+        OMNISPRINT_COMMANDS("omnisprint.commands", Collections.singletonList("ban %player% OmniSprint"), "Commands"),
+
+        FASTCLIMB("fastclimb", "", "FastClimb Check"),
+        FASTCLIMB_A("fastclimb.a", true, "Climb check"),
+        FASTCLIMB_MAX_VL("fastclimb.max_vl", 5, "Max VL"),
+        FASTCLIMB_COMMANDS("fastclimb.commands", Collections.singletonList("ban %player% FastClimb"), "Commands"),
+
+        TIMER("timer", "", "Timer Check"),
+        TIMER_A("timer.a", true, "Balance check"),
+        TIMER_MAX_VL("timer.max_vl", 10, "Max VL"),
+        TIMER_COMMANDS("timer.commands", Collections.singletonList("ban %player% Timer"), "Commands"),
+
+        SCAFFOLD("scaffold", "", "Scaffold Check"),
+        SCAFFOLD_A("scaffold.a", true, "Rotation check"),
+        SCAFFOLD_B("scaffold.b", true, "Expansion check"),
+        SCAFFOLD_MAX_VL("scaffold.max_vl", 10, "Max VL"),
+        SCAFFOLD_COMMANDS("scaffold.commands", Collections.singletonList("ban %player% Scaffold"), "Commands"),
+
+        BADPACKETS("badpackets", "", "BadPackets Check"),
+        BADPACKETS_A("badpackets.a", true, "Spam check"),
+        BADPACKETS_B("badpackets.b", true, "Invalid states check"),
+        BADPACKETS_MAX_VL("badpackets.max_vl", 5, "Max VL"),
+        BADPACKETS_COMMANDS("badpackets.commands", Collections.singletonList("ban %player% Bad Packets"), "Commands");
 
         private final String key;
         private final Object defaultValue;
@@ -210,7 +301,7 @@ public class Checks implements Initializer {
          */
         private void loadValue() {
             if (this.value != null) return;
-            this.value = Anticheat.getInstance().getConfiguration().get(this.key);
+            this.value = Anticheat.getInstance().getChecks().get(this.key);
         }
     }
 }

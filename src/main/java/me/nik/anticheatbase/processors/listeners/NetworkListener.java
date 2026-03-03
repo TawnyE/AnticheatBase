@@ -97,14 +97,37 @@ public class NetworkListener implements PacketListener {
             return new Packet(Packet.Type.CHAT, now).withChat(new WrapperPlayClientChat(wrapper.getMessage()));
         } else if (type == PacketType.Play.Client.ENTITY_ACTION) {
             com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientEntityAction wrapper = new com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientEntityAction(event);
+            me.nik.anticheatbase.wrappers.WrapperPlayClientEntityAction.Action action;
+            com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientEntityAction.Action typeAction = wrapper.getAction();
+
+            // Simplified action mapping to avoid version-specific enum issues
+            String actionName = typeAction.name();
+            if (actionName.equals("START_SNEAKING")) {
+                action = me.nik.anticheatbase.wrappers.WrapperPlayClientEntityAction.Action.START_SNEAKING;
+            } else if (actionName.equals("STOP_SNEAKING")) {
+                action = me.nik.anticheatbase.wrappers.WrapperPlayClientEntityAction.Action.STOP_SNEAKING;
+            } else if (actionName.equals("START_SPRINTING")) {
+                action = me.nik.anticheatbase.wrappers.WrapperPlayClientEntityAction.Action.START_SPRINTING;
+            } else if (actionName.equals("STOP_SPRINTING")) {
+                action = me.nik.anticheatbase.wrappers.WrapperPlayClientEntityAction.Action.STOP_SPRINTING;
+            } else if (actionName.equals("START_FALL_FLYING")) {
+                action = me.nik.anticheatbase.wrappers.WrapperPlayClientEntityAction.Action.START_FALL_FLYING;
+            } else if (actionName.equals("OPEN_INVENTORY")) {
+                action = me.nik.anticheatbase.wrappers.WrapperPlayClientEntityAction.Action.OPEN_INVENTORY;
+            } else {
+                action = me.nik.anticheatbase.wrappers.WrapperPlayClientEntityAction.Action.UNKNOWN;
+            }
+
             return new Packet(Packet.Type.ENTITY_ACTION, now).withEntityAction(new me.nik.anticheatbase.wrappers.WrapperPlayClientEntityAction(
-                    wrapper.getEntityId(), 0, me.nik.anticheatbase.wrappers.WrapperPlayClientEntityAction.Action.UNKNOWN
+                    wrapper.getEntityId(), 0, action
             ));
         } else if (type == PacketType.Play.Client.CLICK_WINDOW) {
             WrapperPlayClientClickWindow wrapper = new WrapperPlayClientClickWindow(event);
             return new Packet(Packet.Type.WINDOW_CLICK, now).withWindowClick(new WrapperPlayClientWindowClick(
                     wrapper.getSlot()
             ));
+        } else if (type == PacketType.Play.Client.ANIMATION) {
+            return new Packet(Packet.Type.ARM_ANIMATION, now);
         }
         return null;
     }
@@ -114,7 +137,11 @@ public class NetworkListener implements PacketListener {
         com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon type = event.getPacketType();
 
         if (type == PacketType.Play.Server.ENTITY_VELOCITY) {
-            return new Packet(Packet.Type.SERVER_ENTITY_VELOCITY, now);
+            com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityVelocity wrapper =
+                    new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityVelocity(event);
+            return new Packet(Packet.Type.SERVER_ENTITY_VELOCITY, now).withServerEntityVelocity(new WrapperPlayServerEntityVelocity(
+                    wrapper.getEntityId(), wrapper.getVelocity().getX(), wrapper.getVelocity().getY(), wrapper.getVelocity().getZ()
+            ));
         } else if (type == PacketType.Play.Server.KEEP_ALIVE) {
             return new Packet(Packet.Type.SERVER_KEEP_ALIVE, now);
         } else if (type == PacketType.Play.Server.PLAYER_POSITION_AND_LOOK) {
