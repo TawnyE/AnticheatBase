@@ -1,6 +1,6 @@
 package me.nik.anticheatbase.utils.versionutils;
 
-import me.nik.anticheatbase.utils.versionutils.impl.ProtocolLib;
+import me.nik.anticheatbase.utils.versionutils.impl.PacketEventsImpl;
 import me.nik.anticheatbase.utils.versionutils.impl.ProtocolSupport;
 import me.nik.anticheatbase.utils.versionutils.impl.ViaVersion;
 import org.bukkit.Bukkit;
@@ -23,7 +23,7 @@ public final class VersionUtils {
 
             VERSION_INSTANCE = new ProtocolSupport();
 
-        } else VERSION_INSTANCE = new ProtocolLib();
+        } else VERSION_INSTANCE = new PacketEventsImpl();
     }
 
     private VersionUtils() {

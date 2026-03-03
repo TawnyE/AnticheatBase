@@ -1,13 +1,14 @@
 package me.nik.anticheatbase.utils.versionutils.impl;
 
-import com.comphenix.protocol.ProtocolLibrary;
+import com.github.retrooper.packetevents.PacketEvents;
 import me.nik.anticheatbase.utils.versionutils.ClientVersion;
 import me.nik.anticheatbase.utils.versionutils.VersionInstance;
 import org.bukkit.entity.Player;
 
-public class ProtocolLib implements VersionInstance {
+public class PacketEventsImpl implements VersionInstance {
     @Override
     public ClientVersion getClientVersion(Player player) {
-        return ClientVersion.getClientVersion(ProtocolLibrary.getProtocolManager().getProtocolVersion(player));
+        int version = PacketEvents.getAPI().getPlayerManager().getClientVersion(player).getProtocolVersion();
+        return ClientVersion.getClientVersion(version);
     }
 }

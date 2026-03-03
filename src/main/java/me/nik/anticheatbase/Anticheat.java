@@ -1,6 +1,8 @@
 package me.nik.anticheatbase;
 
-import com.comphenix.protocol.ProtocolLibrary;
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.event.PacketListener;
+import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import me.nik.anticheatbase.commands.CommandManager;
 import me.nik.anticheatbase.files.Checks;
 import me.nik.anticheatbase.files.Config;
@@ -47,6 +49,7 @@ public class Anticheat extends JavaPlugin {
 
     private AlertManager alertManager;
     private ThemeManager themeManager;
+    private final java.util.List<PacketListener> packetListeners = new java.util.ArrayList<>();
 
     @Override
     public void onEnable() {
@@ -65,6 +68,10 @@ public class Anticheat extends JavaPlugin {
         //Tasks
         new TickTask(this).runTaskTimerAsynchronously(this, 50L, 0L);
 
+        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
+        PacketEvents.getAPI().getSettings().checkForUpdates(false).reEncodeByDefault(false);
+        PacketEvents.getAPI().load();
+
         if (Config.Setting.LOGS_ENABLED.getBoolean()) {
             new LogsTask(this).runTaskTimerAsynchronously(this, 6000L, 6000L);
         }
@@ -77,7 +84,12 @@ public class Anticheat extends JavaPlugin {
         Arrays.asList(
                 new NetworkListener(this),
                 new ClientBrandListener(this)
-        ).forEach(packetListener -> ProtocolLibrary.getProtocolManager().addPacketListener(packetListener));
+        ).forEach(packetListener -> {
+            this.packetListeners.add(packetListener);
+            PacketEvents.getAPI().getEventManager().registerListener(packetListener);
+        });
+
+        PacketEvents.getAPI().init();
 
         //Bukkit Listeners
         Arrays.asList(
@@ -129,7 +141,10 @@ public class Anticheat extends JavaPlugin {
 
         //Unregister any listeners
         HandlerList.unregisterAll(this);
-        ProtocolLibrary.getProtocolManager().removePacketListeners(this);
+        this.packetListeners.forEach(listener -> PacketEvents.getAPI().getEventManager().unregisterListener(listener));
+        this.packetListeners.clear();
+
+        PacketEvents.getAPI().terminate();
 
         //Cancel all tasks
         Bukkit.getScheduler().cancelTasks(this);

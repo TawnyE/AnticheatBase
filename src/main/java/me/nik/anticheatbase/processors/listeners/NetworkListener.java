@@ -1,224 +1,185 @@
 package me.nik.anticheatbase.processors.listeners;
 
-import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.events.ListenerPriority;
-import com.comphenix.protocol.events.PacketAdapter;
-import com.comphenix.protocol.events.PacketContainer;
-import com.comphenix.protocol.events.PacketEvent;
+import com.github.retrooper.packetevents.event.PacketListener;
+import com.github.retrooper.packetevents.event.PacketListenerPriority;
+import com.github.retrooper.packetevents.event.simple.PacketPlayReceiveEvent;
+import com.github.retrooper.packetevents.event.simple.PacketPlaySendEvent;
+import com.github.retrooper.packetevents.protocol.packettype.PacketType;
+import com.github.retrooper.packetevents.wrapper.play.client.*;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityVelocity;
 import me.nik.anticheatbase.Anticheat;
 import me.nik.anticheatbase.managers.profile.Profile;
 import me.nik.anticheatbase.processors.Packet;
 import me.nik.anticheatbase.utils.ChatUtils;
 import me.nik.anticheatbase.utils.MoveUtils;
 import me.nik.anticheatbase.utils.TaskUtils;
-import me.nik.anticheatbase.wrappers.WrapperPlayClientLook;
-import me.nik.anticheatbase.wrappers.WrapperPlayClientPosition;
-import me.nik.anticheatbase.wrappers.WrapperPlayClientPositionLook;
-import me.nik.anticheatbase.wrappers.WrapperPlayServerEntityVelocity;
 import org.bukkit.entity.Player;
 
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-/**
- * A network listener class that we'll use in order to listen for received and sent packets for our checks and data.
- */
-public class NetworkListener extends PacketAdapter {
+public class NetworkListener implements PacketListener {
 
     private final Anticheat plugin;
 
-    /*
-    Filter only the clientbound and serverbound packets that we'll actually use.
-    This ensures that we'll be maximizing our perfomance by not processing any
-    Packets that we're never using.
-     */
-    private static final List<PacketType> WHITELISTED_PACKETS = new CopyOnWriteArrayList<>(Stream.of(
-            /*
-            Clientbound Packets
-             */
-            PacketType.Play.Client.FLYING,
-            PacketType.Play.Client.GROUND,
-            PacketType.Play.Client.POSITION,
-            PacketType.Play.Client.POSITION_LOOK,
-            PacketType.Play.Client.LOOK,
-            PacketType.Play.Client.ABILITIES,
-            PacketType.Play.Client.ARM_ANIMATION,
-            PacketType.Play.Client.BLOCK_DIG,
-            PacketType.Play.Client.BLOCK_PLACE,
-            PacketType.Play.Client.CHAT,
-            PacketType.Play.Client.ENTITY_ACTION,
-            PacketType.Play.Client.KEEP_ALIVE,
-            PacketType.Play.Client.PONG,
-            PacketType.Play.Client.TRANSACTION,
-            PacketType.Play.Client.RESOURCE_PACK_STATUS,
-            PacketType.Play.Client.SETTINGS,
-            PacketType.Play.Client.SPECTATE,
-            PacketType.Play.Client.STEER_VEHICLE,
-            PacketType.Play.Client.USE_ENTITY,
-            PacketType.Play.Client.USE_ITEM,
-            PacketType.Play.Client.VEHICLE_MOVE,
-            PacketType.Play.Client.WINDOW_CLICK,
-            PacketType.Play.Client.SET_CREATIVE_SLOT,
-            PacketType.Play.Client.HELD_ITEM_SLOT,
-            /*
-            Serverbound Packets
-             */
-            PacketType.Play.Server.EXPLOSION,
-            PacketType.Play.Server.ENTITY_VELOCITY,
-            PacketType.Play.Server.KEEP_ALIVE,
-            PacketType.Play.Server.ABILITIES,
-            PacketType.Play.Server.POSITION,
-            PacketType.Play.Server.PING,
-            PacketType.Play.Server.TRANSACTION,
-            PacketType.Play.Server.REMOVE_ENTITY_EFFECT,
-            PacketType.Play.Server.ENTITY_EFFECT,
-            PacketType.Play.Server.UPDATE_ATTRIBUTES
-            /*
-            Remove any packets that are not supported
-            In the current server version.
-
-            ProtocolLib removes them automatically
-            However with this we're ensuring
-            There won't be any warnings.
-             */
-    ).filter(PacketType::isSupported).collect(Collectors.toList()));
-
     public NetworkListener(Anticheat plugin) {
-        super(plugin, ListenerPriority.LOWEST, WHITELISTED_PACKETS);
-
         this.plugin = plugin;
-
-        //Clear cache
-        WHITELISTED_PACKETS.clear();
     }
 
     @Override
-    public void onPacketReceiving(PacketEvent e) {
-        if (e.isPlayerTemporary() || e.getPlayer() == null) return;
+    public PacketListenerPriority getPriority() {
+        return PacketListenerPriority.LOWEST;
+    }
 
-        final Player player = e.getPlayer();
+    @Override
+    public void onPacketPlayReceive(PacketPlayReceiveEvent event) {
+        Player player = (Player) event.getPlayer();
+        if (player == null) return;
 
-        final Packet packet = new Packet(e.getPacket(), System.currentTimeMillis());
+        Packet packet = mapReceive(event);
+        if (packet == null) return;
 
-        /*
-         Check for position crashers which could destroy our multithreading
-         We have to do this on the netty thread in order to cancel the packet
-        */
         final String crashAttempt = checkCrasher(packet);
 
         if (crashAttempt != null) {
-
-            e.setCancelled(true);
-
+            event.setCancelled(true);
             ChatUtils.log("Kicking " + player.getName() + " for sending an invalid position packet, Information: " + crashAttempt);
-
-            //Kick the player on the main thread
             TaskUtils.task(() -> player.kickPlayer("Invalid Packet"));
-
             return;
         }
 
         final Profile profile = this.plugin.getProfileManager().getProfile(player);
-
         if (profile == null) return;
 
         profile.getProfileThread().execute(() -> profile.handle(packet));
     }
 
     @Override
-    public void onPacketSending(PacketEvent e) {
-        if (e.isPlayerTemporary() || e.getPlayer() == null) return;
-
-        final Player player = e.getPlayer();
+    public void onPacketPlaySend(PacketPlaySendEvent event) {
+        Player player = (Player) event.getPlayer();
+        if (player == null) return;
 
         final Profile profile = this.plugin.getProfileManager().getProfile(player);
-
         if (profile == null) return;
 
-        final PacketContainer container = e.getPacket();
+        Packet packet = mapSend(event);
+        if (packet == null) return;
 
-        final Packet packet = new Packet(container, System.currentTimeMillis());
-
-        /*
-        ---------------------------------------------------------------------------
-        Validate serverbound packets to make sure they're being sent to the player
-        ---------------------------------------------------------------------------
-         */
-        final int playerId = player.getEntityId();
-
-        switch (packet.getType()) {
-
-            case SERVER_ENTITY_VELOCITY:
-
-                final WrapperPlayServerEntityVelocity velocity = new WrapperPlayServerEntityVelocity(container);
-
-                if (velocity.getEntityID() != playerId) return;
-
-                break;
-
-                /*
-                Validate more
-                 */
+        if (packet.getType() == Packet.Type.SERVER_ENTITY_VELOCITY) {
+            WrapperPlayServerEntityVelocity velocity = new WrapperPlayServerEntityVelocity(event);
+            if (velocity.getEntityId() != player.getEntityId()) return;
         }
-        /*
-        ---------------------------------------------------------------------------
-         */
 
         profile.getProfileThread().execute(() -> profile.handle(packet));
     }
 
-    private String checkCrasher(Packet packet) {
+    private Packet mapReceive(PacketPlayReceiveEvent event) {
+        long now = System.currentTimeMillis();
+        Object packetType = event.getPacketType();
 
+        if (packetType == PacketType.Play.Client.PLAYER_FLYING) {
+            return new Packet(Packet.Type.FLYING, now).markFlying(true);
+        }
+        if (packetType == PacketType.Play.Client.PLAYER_ROTATION) {
+            WrapperPlayClientPlayerRotation wrapper = new WrapperPlayClientPlayerRotation(event);
+            return new Packet(Packet.Type.LOOK, now).withLook(new me.nik.anticheatbase.wrappers.WrapperPlayClientLook(
+                    wrapper.getYaw(), wrapper.getPitch(), wrapper.isOnGround()
+            ));
+        }
+        if (packetType == PacketType.Play.Client.PLAYER_POSITION) {
+            WrapperPlayClientPlayerPosition wrapper = new WrapperPlayClientPlayerPosition(event);
+            return new Packet(Packet.Type.POSITION, now).withPosition(new me.nik.anticheatbase.wrappers.WrapperPlayClientPosition(
+                    wrapper.getX(), wrapper.getY(), wrapper.getZ(), wrapper.isOnGround()
+            ));
+        }
+        if (packetType == PacketType.Play.Client.PLAYER_POSITION_AND_ROTATION) {
+            WrapperPlayClientPlayerPositionAndRotation wrapper = new WrapperPlayClientPlayerPositionAndRotation(event);
+            return new Packet(Packet.Type.POSITION_LOOK, now).withPositionLook(new me.nik.anticheatbase.wrappers.WrapperPlayClientPositionLook(
+                    wrapper.getX(), wrapper.getY(), wrapper.getZ(), wrapper.getYaw(), wrapper.getPitch(), wrapper.isOnGround()
+            ));
+        }
+        if (packetType == PacketType.Play.Client.INTERACT_ENTITY) {
+            WrapperPlayClientInteractEntity wrapper = new WrapperPlayClientInteractEntity(event);
+            me.nik.anticheatbase.wrappers.WrapperPlayClientUseEntity.Action action;
+            switch (wrapper.getAction()) {
+                case ATTACK: action = me.nik.anticheatbase.wrappers.WrapperPlayClientUseEntity.Action.ATTACK; break;
+                case INTERACT_AT: action = me.nik.anticheatbase.wrappers.WrapperPlayClientUseEntity.Action.INTERACT_AT; break;
+                case INTERACT: action = me.nik.anticheatbase.wrappers.WrapperPlayClientUseEntity.Action.INTERACT; break;
+                default: action = me.nik.anticheatbase.wrappers.WrapperPlayClientUseEntity.Action.UNKNOWN;
+            }
+            return new Packet(Packet.Type.USE_ENTITY, now).withUseEntity(new me.nik.anticheatbase.wrappers.WrapperPlayClientUseEntity(
+                    wrapper.getEntityId(), action, null
+            ));
+        }
+        if (packetType == PacketType.Play.Client.CHAT_MESSAGE) {
+            WrapperPlayClientChatMessage wrapper = new WrapperPlayClientChatMessage(event);
+            return new Packet(Packet.Type.CHAT, now).withChat(new me.nik.anticheatbase.wrappers.WrapperPlayClientChat(wrapper.getMessage()));
+        }
+        if (packetType == PacketType.Play.Client.ENTITY_ACTION) {
+            WrapperPlayClientEntityAction wrapper = new WrapperPlayClientEntityAction(event);
+            return new Packet(Packet.Type.ENTITY_ACTION, now).withEntityAction(new me.nik.anticheatbase.wrappers.WrapperPlayClientEntityAction(
+                    wrapper.getEntityId(), wrapper.getJumpBoost(), me.nik.anticheatbase.wrappers.WrapperPlayClientEntityAction.Action.UNKNOWN
+            ));
+        }
+        if (packetType == PacketType.Play.Client.CLICK_WINDOW) {
+            WrapperPlayClientClickWindow wrapper = new WrapperPlayClientClickWindow(event);
+            return new Packet(Packet.Type.WINDOW_CLICK, now).withWindowClick(new me.nik.anticheatbase.wrappers.WrapperPlayClientWindowClick(
+                    wrapper.getSlot()
+            ));
+        }
+        return null;
+    }
+
+    private Packet mapSend(PacketPlaySendEvent event) {
+        long now = System.currentTimeMillis();
+        Object packetType = event.getPacketType();
+
+        if (packetType == PacketType.Play.Server.ENTITY_VELOCITY) {
+            return new Packet(Packet.Type.SERVER_ENTITY_VELOCITY, now);
+        }
+        if (packetType == PacketType.Play.Server.KEEP_ALIVE) {
+            return new Packet(Packet.Type.SERVER_KEEP_ALIVE, now);
+        }
+        if (packetType == PacketType.Play.Server.PLAYER_POSITION_AND_LOOK) {
+            return new Packet(Packet.Type.SERVER_POSITION, now);
+        }
+        if (packetType == PacketType.Play.Server.ENTITY_EFFECT) {
+            return new Packet(Packet.Type.SERVER_ENTITY_EFFECT, now);
+        }
+        if (packetType == PacketType.Play.Server.REMOVE_ENTITY_EFFECT) {
+            return new Packet(Packet.Type.SERVER_REMOVE_ENTITY_EFFECT, now);
+        }
+        return null;
+    }
+
+    private String checkCrasher(Packet packet) {
         final Packet.Type type = packet.getType();
 
         double x = 0D, y = 0D, z = 0D;
         float yaw = 0F, pitch = 0F;
 
         switch (type) {
-
             case POSITION:
-
-                WrapperPlayClientPosition pos = packet.getPositionWrapper();
-
-                x = Math.abs(pos.getX());
-                y = Math.abs(pos.getY());
-                z = Math.abs(pos.getZ());
-
+                x = Math.abs(packet.getPositionWrapper().getX());
+                y = Math.abs(packet.getPositionWrapper().getY());
+                z = Math.abs(packet.getPositionWrapper().getZ());
                 break;
-
             case POSITION_LOOK:
-
-                WrapperPlayClientPositionLook posLook = packet.getPositionLookWrapper();
-
-                x = Math.abs(posLook.getX());
-                y = Math.abs(posLook.getY());
-                z = Math.abs(posLook.getZ());
-                yaw = Math.abs(posLook.getYaw());
-                pitch = Math.abs(posLook.getPitch());
-
+                x = Math.abs(packet.getPositionLookWrapper().getX());
+                y = Math.abs(packet.getPositionLookWrapper().getY());
+                z = Math.abs(packet.getPositionLookWrapper().getZ());
+                yaw = Math.abs(packet.getPositionLookWrapper().getYaw());
+                pitch = Math.abs(packet.getPositionLookWrapper().getPitch());
                 break;
-
             case LOOK:
-
-                WrapperPlayClientLook look = packet.getLookWrapper();
-
-                yaw = Math.abs(look.getYaw());
-                pitch = Math.abs(look.getPitch());
-
+                yaw = Math.abs(packet.getLookWrapper().getYaw());
+                pitch = Math.abs(packet.getLookWrapper().getPitch());
                 break;
         }
 
         final double invalidValue = 3.0E7D;
 
-        //This messes our threading system and potentially causes damage to the server.
         final boolean invalid = x > invalidValue || y > invalidValue || z > invalidValue
                 || yaw > 3.4028235e+35F
                 || pitch > MoveUtils.MAXIMUM_PITCH;
 
-        //It's impossible for these values to be NaN or Infinite.
         final boolean impossible = !Double.isFinite(x)
                 || !Double.isFinite(y)
                 || !Double.isFinite(z)
