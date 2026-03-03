@@ -1,5 +1,6 @@
 package me.nik.anticheatbase.playerdata.data.impl;
 
+import lombok.Getter;
 import me.nik.anticheatbase.Anticheat;
 import me.nik.anticheatbase.managers.profile.Profile;
 import me.nik.anticheatbase.playerdata.data.Data;
@@ -7,15 +8,17 @@ import me.nik.anticheatbase.processors.Packet;
 import me.nik.anticheatbase.utils.MiscUtils;
 import me.nik.anticheatbase.utils.custom.PlacedBlock;
 import me.nik.anticheatbase.utils.custom.desync.Desync;
+import me.nik.anticheatbase.wrappers.WrapperPlayClientEntityAction;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+@Getter
 public class ActionData implements Data {
 
     private GameMode gameMode;
 
-    private boolean allowFlight, sneaking;
+    private boolean allowFlight, sneaking, sprinting, inventoryOpen;
 
     private final Desync desync;
 
@@ -47,44 +50,22 @@ public class ActionData implements Data {
 
     @Override
     public void process(Packet packet) {
-        /*
-        Handle the packet
-         */
-    }
-
-    public int getLastRidingTicks() {
-        return lastRidingTicks;
-    }
-
-    public PlacedBlock getPlacedBlock() {
-        return placedBlock;
-    }
-
-    public boolean isSneaking() {
-        return sneaking;
-    }
-
-    public ItemStack getItemInMainHand() {
-        return itemInMainHand;
-    }
-
-    public ItemStack getItemInOffHand() {
-        return itemInOffHand;
-    }
-
-    public Desync getDesync() {
-        return desync;
-    }
-
-    public int getLastSleepingTicks() {
-        return lastSleepingTicks;
-    }
-
-    public GameMode getGameMode() {
-        return gameMode;
-    }
-
-    public int getLastDuplicateOnePointSeventeenPacketTicks() {
-        return lastDuplicateOnePointSeventeenPacketTicks;
+        if (packet.is(Packet.Type.ENTITY_ACTION)) {
+            WrapperPlayClientEntityAction wrapper = packet.getEntityActionWrapper();
+            switch (wrapper.getAction()) {
+                case START_SNEAKING -> this.sneaking = true;
+                case STOP_SNEAKING -> this.sneaking = false;
+                case START_SPRINTING -> this.sprinting = true;
+                case STOP_SPRINTING -> this.sprinting = false;
+                case OPEN_INVENTORY -> this.inventoryOpen = true;
+            }
+        } else if (packet.is(Packet.Type.WINDOW_CLICK)) {
+            this.inventoryOpen = true;
+        } else if (packet.is(Packet.Type.FLYING)) {
+            this.lastAllowFlightTicks = this.allowFlight ? 0 : this.lastAllowFlightTicks + 1;
+            this.lastSleepingTicks++;
+            this.lastRidingTicks++;
+            this.lastDuplicateOnePointSeventeenPacketTicks++;
+        }
     }
 }

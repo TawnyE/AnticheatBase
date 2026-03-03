@@ -39,6 +39,7 @@ public class MovementData implements Data {
     private CustomLocation location, lastLocation;
 
     private List<Material> nearbyBlocks = new ArrayList<>();
+    private CollisionUtils.NearbyBlocksResult nearbyBlocksResult;
 
     private boolean onGround, lastOnGround, serverGround, lastServerGround;
 
@@ -186,7 +187,7 @@ public class MovementData implements Data {
         /*
         Get the nearby block result from the current location.
          */
-        final CollisionUtils.NearbyBlocksResult nearbyBlocksResult = CollisionUtils.getNearbyBlocks(this.location, false);
+        this.nearbyBlocksResult = CollisionUtils.getNearbyBlocks(this.location, false);
 
         /*
         Handle collisions
@@ -423,5 +424,9 @@ public class MovementData implements Data {
 
     public List<Material> getNearbyBlocks() {
         return nearbyBlocks;
+    }
+
+    public CollisionUtils.NearbyBlocksResult getNearbyBlocksResult() {
+        return nearbyBlocksResult;
     }
 }
