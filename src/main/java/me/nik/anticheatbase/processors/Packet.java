@@ -1,8 +1,5 @@
 package me.nik.anticheatbase.processors;
 
-import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.events.PacketContainer;
-import com.comphenix.protocol.wrappers.EnumWrappers;
 import me.nik.anticheatbase.wrappers.WrapperPlayClientBlockDig;
 import me.nik.anticheatbase.wrappers.WrapperPlayClientChat;
 import me.nik.anticheatbase.wrappers.WrapperPlayClientEntityAction;
@@ -12,126 +9,77 @@ import me.nik.anticheatbase.wrappers.WrapperPlayClientPositionLook;
 import me.nik.anticheatbase.wrappers.WrapperPlayClientUseEntity;
 import me.nik.anticheatbase.wrappers.WrapperPlayClientWindowClick;
 
-/**
- * A packet wrapper class that we'll use in order to make it easier for us to get the received or sent packet
- * <p>
- * While also caching the possible wrappers that we need, along with a timestamp.
- * <p>
- * This packet class is made in order to cache every single thing (or possible things)
- * That we're going to be using for our checks and processors
- * Instead of checking (packetType == POSITION_LOOK) over and over again.
- * Our wrappers also cache the values it receives, so it won't have to use reflection
- * Over and over again (Although ProtocolLib handles it efficiently by itself after a while)
- */
 public class Packet {
 
-    private final PacketContainer container;
     private final Type type;
     private final long timeStamp;
 
-    /*
-    Use entity cache
-     */
     private WrapperPlayClientUseEntity useEntityWrapper;
-    private boolean attack;
-
-    /*
-    Block Dig cache
-     */
     private WrapperPlayClientBlockDig blockDigWrapper;
-
-    /*
-    Window Click cache
-     */
     private WrapperPlayClientWindowClick windowClickWrapper;
-
-    /*
-    Entity Action cache
-     */
     private WrapperPlayClientEntityAction entityActionWrapper;
-
-    /*
-    Chat cache
-     */
     private WrapperPlayClientChat chatWrapper;
-
-    /*
-    Movement - Flying cache
-     */
     private WrapperPlayClientPosition positionWrapper;
     private WrapperPlayClientPositionLook positionLookWrapper;
     private WrapperPlayClientLook lookWrapper;
-    private boolean movement, rotation, flying;
 
-    public Packet(PacketContainer container, long timeStamp) {
-        this.container = container;
+    private boolean attack;
+    private boolean movement;
+    private boolean rotation;
+    private boolean flying;
+
+    public Packet(Type type, long timeStamp) {
+        this.type = type;
         this.timeStamp = timeStamp;
+    }
 
-        switch (this.type = Type.fromContainer(container)) {
+    public Packet withUseEntity(WrapperPlayClientUseEntity wrapper) {
+        this.useEntityWrapper = wrapper;
+        this.attack = wrapper != null && wrapper.getType() == WrapperPlayClientUseEntity.Action.ATTACK;
+        return this;
+    }
 
-            case USE_ENTITY:
+    public Packet withBlockDig(WrapperPlayClientBlockDig wrapper) {
+        this.blockDigWrapper = wrapper;
+        return this;
+    }
 
-                this.useEntityWrapper = new WrapperPlayClientUseEntity(container);
+    public Packet withWindowClick(WrapperPlayClientWindowClick wrapper) {
+        this.windowClickWrapper = wrapper;
+        return this;
+    }
 
-                this.attack = this.useEntityWrapper.getType() == EnumWrappers.EntityUseAction.ATTACK;
+    public Packet withEntityAction(WrapperPlayClientEntityAction wrapper) {
+        this.entityActionWrapper = wrapper;
+        return this;
+    }
 
-                break;
+    public Packet withChat(WrapperPlayClientChat wrapper) {
+        this.chatWrapper = wrapper;
+        return this;
+    }
 
-            case BLOCK_DIG:
+    public Packet withPosition(WrapperPlayClientPosition wrapper) {
+        this.positionWrapper = wrapper;
+        this.flying = this.movement = wrapper != null;
+        return this;
+    }
 
-                this.blockDigWrapper = new WrapperPlayClientBlockDig(container);
+    public Packet withPositionLook(WrapperPlayClientPositionLook wrapper) {
+        this.positionLookWrapper = wrapper;
+        this.flying = this.movement = this.rotation = wrapper != null;
+        return this;
+    }
 
-                break;
+    public Packet withLook(WrapperPlayClientLook wrapper) {
+        this.lookWrapper = wrapper;
+        this.flying = this.rotation = wrapper != null;
+        return this;
+    }
 
-            case WINDOW_CLICK:
-
-                this.windowClickWrapper = new WrapperPlayClientWindowClick(container);
-
-                break;
-
-            case ENTITY_ACTION:
-
-                this.entityActionWrapper = new WrapperPlayClientEntityAction(container);
-
-                break;
-
-            case CHAT:
-
-                this.chatWrapper = new WrapperPlayClientChat(container);
-
-                break;
-
-            case FLYING:
-            case GROUND:
-
-                this.flying = true;
-
-                break;
-
-            case POSITION:
-
-                this.positionWrapper = new WrapperPlayClientPosition(container);
-
-                this.flying = this.movement = true;
-
-                break;
-
-            case POSITION_LOOK:
-
-                this.positionLookWrapper = new WrapperPlayClientPositionLook(container);
-
-                this.flying = this.movement = this.rotation = true;
-
-                break;
-
-            case LOOK:
-
-                this.lookWrapper = new WrapperPlayClientLook(container);
-
-                this.flying = this.rotation = true;
-
-                break;
-        }
+    public Packet markFlying(boolean flying) {
+        this.flying = flying;
+        return this;
     }
 
     public boolean isAttack() {
@@ -186,10 +134,6 @@ public class Packet {
         return this.type == type;
     }
 
-    public PacketContainer getContainer() {
-        return container;
-    }
-
     public Type getType() {
         return type;
     }
@@ -199,9 +143,6 @@ public class Packet {
     }
 
     public enum Type {
-        /*
-        ClientBound
-         */
         FLYING,
         GROUND,
         POSITION,
@@ -226,9 +167,7 @@ public class Packet {
         WINDOW_CLICK,
         SET_CREATIVE_SLOT,
         HELD_ITEM_SLOT,
-        /*
-        ServerBound
-         */
+
         SERVER_EXPLOSION,
         SERVER_ENTITY_VELOCITY,
         SERVER_KEEP_ALIVE,
@@ -238,13 +177,6 @@ public class Packet {
         SERVER_TRANSACTION,
         SERVER_REMOVE_ENTITY_EFFECT,
         SERVER_ENTITY_EFFECT,
-        SERVER_UPDATE_ATTRIBUTES;
-
-        private static Type fromContainer(PacketContainer container) {
-
-            PacketType type = container.getType();
-
-            return Type.valueOf(type.isClient() ? type.name() : ("SERVER_" + type.name()));
-        }
+        SERVER_UPDATE_ATTRIBUTES
     }
 }

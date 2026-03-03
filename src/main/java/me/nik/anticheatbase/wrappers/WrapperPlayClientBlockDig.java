@@ -1,51 +1,31 @@
 package me.nik.anticheatbase.wrappers;
 
-import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.events.PacketContainer;
-import com.comphenix.protocol.wrappers.BlockPosition;
-import com.comphenix.protocol.wrappers.EnumWrappers;
+import org.bukkit.util.Vector;
 
-public class WrapperPlayClientBlockDig extends PacketWrapper {
+public class WrapperPlayClientBlockDig {
 
-    public static final PacketType TYPE = PacketType.Play.Client.BLOCK_DIG;
-
-    private final BlockPosition location;
-    private final EnumWrappers.Direction direction;
-    private final EnumWrappers.PlayerDigType status;
-
-    public WrapperPlayClientBlockDig(PacketContainer packet) {
-        super(packet, TYPE);
-
-        this.location = handle.getBlockPositionModifier().read(0);
-
-        this.direction = handle.getDirections().read(0);
-
-        this.status = handle.getPlayerDigTypes().read(0);
+    public enum DigStatus {
+        START_DESTROY_BLOCK,
+        ABORT_DESTROY_BLOCK,
+        STOP_DESTROY_BLOCK,
+        DROP_ALL_ITEMS,
+        DROP_ITEM,
+        RELEASE_USE_ITEM,
+        SWAP_HELD_ITEMS,
+        UNKNOWN
     }
 
-    /**
-     * Retrieve Location.
-     * <p>
-     * Notes: block position
-     *
-     * @return The current Location
-     */
-    public BlockPosition getLocation() {
-        return location;
+    private final Vector location;
+    private final String direction;
+    private final DigStatus status;
+
+    public WrapperPlayClientBlockDig(Vector location, String direction, DigStatus status) {
+        this.location = location;
+        this.direction = direction;
+        this.status = status;
     }
 
-    public EnumWrappers.Direction getDirection() {
-        return direction;
-    }
-
-    /**
-     * Retrieve Status.
-     * <p>
-     * Notes: the action the player is taking against the block (see below)
-     *
-     * @return The current Status
-     */
-    public EnumWrappers.PlayerDigType getStatus() {
-        return status;
-    }
+    public Vector getLocation() { return location; }
+    public String getDirection() { return direction; }
+    public DigStatus getStatus() { return status; }
 }
